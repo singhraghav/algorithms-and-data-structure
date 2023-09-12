@@ -14,10 +14,9 @@ repositories {
 dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.28'
     annotationProcessor 'org.projectlombok:lombok:1.18.28'
-//    implementation group: 'org.scala-lang', name: 'scala3-library_3', version: '3.3.0'
 
-    // This dependency is used by the application.
-//    implementation 'com.google.guava:guava:30.1.1-jre'
+    implementation 'org.scala-lang:scala-library:2.13.12'
+
 }
 
 
