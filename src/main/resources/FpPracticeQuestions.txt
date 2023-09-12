@@ -1,0 +1,2 @@
+1. Create your own list and implement the following functions
+    - head, tail, get nth element, length, reverse, concat
