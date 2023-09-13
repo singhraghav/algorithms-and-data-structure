@@ -20,6 +20,16 @@ sealed abstract class RList[+T] {
   def reverse: RList[T]
 
   def ++[S >: T](other: RList[S]): RList[S]
+
+  def removeAt(index: Int): RList[T]
+
+  def map[S](f: T => S): RList[S]
+
+  def flatMap[S](f: T => RList[S]): RList[S]
+
+  def filter(f: T => Boolean): RList[T]
+
+
 }
 
 case object RNil extends RList[Nothing] {
@@ -40,6 +50,14 @@ case object RNil extends RList[Nothing] {
   override def reverse: RList[Nothing] = this
 
   override def ++[S >: Nothing](other: RList[S]): RList[S] = other
+
+  override def removeAt(index: Int): RList[Nothing] = this
+
+  override def map[S](f: Nothing => S): RList[S] = this
+
+  override def flatMap[S](f: Nothing => RList[S]): RList[S] = this
+
+  override def filter(f: Nothing => Boolean): RList[Nothing] = this
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T] {
@@ -98,6 +116,48 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     loop(this.reverse, other)
   }
+
+
+  override def removeAt(index: Int): RList[T] = {
+
+    @tailrec
+    def loop(acc: RList[T], remaining: RList[T], currentIndex: Int): RList[T] =
+      if (currentIndex < index && remaining.isEmpty) this
+      else if (currentIndex == index && remaining.isEmpty) acc.reverse
+      else if(currentIndex == index) acc.reverse ++ remaining.tail
+      else loop(remaining.head :: acc, remaining.tail, currentIndex + 1)
+
+    loop(RNil, this, 0)
+  }
+
+  override def map[S](f: T => S): RList[S] = {
+
+    @tailrec
+    def loop(accumulated: RList[S], remaining: RList[T]): RList[S] =
+      if(remaining.isEmpty) accumulated.reverse
+      else loop(f(remaining.head) :: accumulated, remaining.tail)
+
+    loop(RNil, this)
+  }
+
+  override def flatMap[S](f: T => RList[S]): RList[S] = {
+
+    @tailrec
+    def loop(accumulated: RList[S], remaining: RList[T]): RList[S] =
+      if (remaining.isEmpty) accumulated
+      else loop(accumulated ++ f(remaining.head), remaining.tail)
+
+    loop(RNil, this)
+  }
+
+  override def filter(f: T => Boolean): RList[T] = {
+    @tailrec
+    def loop(accumulated: RList[T], remaining: RList[T]): RList[T] =
+      if (remaining.isEmpty) accumulated.reverse
+      else loop( if(f(remaining.head)) remaining.head :: accumulated else accumulated, remaining.tail)
+
+    loop(RNil, this)
+  }
 }
 
 
@@ -115,4 +175,22 @@ object ListProblems extends App {
   val list2 = ::(4, ::(5, RNil))
 
   println(list2 ++ RNil)
+
+  //[2, 3]
+  println(list1.removeAt(0))
+
+  //[1, 3]
+  println(list1.removeAt(1))
+
+  //[1, 2]
+  println(list1.removeAt(2))
+
+  //[1, 2, 3]
+  println(list1.removeAt(3))
+
+  println(list1.map(_ * 2))
+
+  println(list1.flatMap(x => ::(x, ::(x+ 1, RNil))))
+
+  println(list1.filter(_ % 2 != 0))
 }
