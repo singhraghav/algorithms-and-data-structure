@@ -29,7 +29,9 @@ sealed abstract class RList[+T] {
 
   def filter(f: T => Boolean): RList[T]
 
+  def rle: RList[(T, Int)]
 
+  def duplicateEach(n: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -58,6 +60,10 @@ case object RNil extends RList[Nothing] {
   override def flatMap[S](f: Nothing => RList[S]): RList[S] = this
 
   override def filter(f: Nothing => Boolean): RList[Nothing] = this
+
+  override def rle: RList[(Nothing, Int)] = this
+
+  override def duplicateEach(n: Int): RList[Nothing] = this
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T] {
@@ -158,6 +164,35 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     loop(RNil, this)
   }
+
+  override def rle: RList[(T, Int)] = {
+
+    @tailrec
+    def loop(accumulator: RList[(T, Int)], remaining: RList[T]): RList[(T, Int)] =
+      if (remaining.isEmpty) accumulator.reverse
+      else {
+        accumulator match {
+          case (element, count) :: t if element == remaining.head => loop((element, count + 1) :: t, remaining.tail)
+          case _ => loop((remaining.head, 1) :: accumulator, remaining.tail)
+        }
+      }
+
+    loop(RNil, this)
+  }
+
+  override def duplicateEach(n: Int): RList[T] = {
+
+    @tailrec
+    def loop(accumulator: RList[T], remaining: RList[T], times: Int): RList[T] =
+      if (remaining.isEmpty) accumulator.reverse
+      else {
+        if (times == 0)
+          loop(accumulator, remaining.tail, n)
+        else
+          loop(remaining.head :: accumulator, remaining, times - 1)
+      }
+    if(n <= 1) this else loop(RNil, this, n)
+  }
 }
 
 
@@ -193,4 +228,11 @@ object ListProblems extends App {
   println(list1.flatMap(x => ::(x, ::(x+ 1, RNil))))
 
   println(list1.filter(_ % 2 != 0))
+
+  //[1, 1, 2, 3, 3, 3, 3, 3, 4,4,4,5,6]
+  val list3 = ::(1, ::(1, ::(2, ::(3, ::(3, ::(3, ::(3, ::(3, ::(4, ::(4, ::(4, ::(5, ::(6, RNil)))))))))))))
+  //[(1, 2), (2, 1), (3, 5), (4, 3), (5, 1), (6,1)]
+  println(list3.rle)
+
+  println(list1.duplicateEach(1))
 }
