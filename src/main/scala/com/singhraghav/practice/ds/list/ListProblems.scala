@@ -1,4 +1,4 @@
-package com.singhraghav.practice.list
+package com.singhraghav.practice.ds.list
 
 import scala.annotation.tailrec
 
