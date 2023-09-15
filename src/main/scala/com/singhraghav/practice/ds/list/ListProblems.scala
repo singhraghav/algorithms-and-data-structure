@@ -32,6 +32,10 @@ sealed abstract class RList[+T] {
   def rle: RList[(T, Int)]
 
   def duplicateEach(n: Int): RList[T]
+
+  def rotateLeft(n: Int): RList[T]
+
+  def sample(k: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -64,6 +68,9 @@ case object RNil extends RList[Nothing] {
   override def rle: RList[(Nothing, Int)] = this
 
   override def duplicateEach(n: Int): RList[Nothing] = this
+
+  override def rotateLeft(n: Int): RList[Nothing] = this
+
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T] {
@@ -193,6 +200,19 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
       }
     if(n <= 1) this else loop(RNil, this, n)
   }
+
+  override def rotateLeft(n: Int): RList[T] = {
+
+    val actualRotationNeeded = n % this.length
+
+    @tailrec
+    def loop(acc: RList[T], remaining: RList[T], rotationLeft: Int): RList[T] =
+      if(rotationLeft == 0) remaining ++ acc.reverse
+      else loop(remaining.head :: acc, remaining.tail, rotationLeft - 1)
+
+    if (actualRotationNeeded == 0) this else loop(RNil, this, actualRotationNeeded)
+  }
+
 }
 
 
@@ -235,4 +255,6 @@ object ListProblems extends App {
   println(list3.rle)
 
   println(list1.duplicateEach(1))
+
+  println(::(1, RNil).rotateLeft(3))
 }
