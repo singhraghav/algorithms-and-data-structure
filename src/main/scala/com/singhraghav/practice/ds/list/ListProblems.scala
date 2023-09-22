@@ -39,6 +39,8 @@ sealed abstract class RList[+T] {
 
   def mergeSort[T1 >: T](ordering: Ordering[T1]): RList[T1]
 
+  def quickSort[T1 >: T](ordering: Ordering[T1]): RList[T1]
+
 }
 
 case object RNil extends RList[Nothing] {
@@ -77,6 +79,8 @@ case object RNil extends RList[Nothing] {
   override def insertionSort[T1 >: Nothing](ordering: Ordering[T1]): RList[T1] = this
 
   override def mergeSort[T1 >: Nothing](ordering: Ordering[T1]): RList[T1] = this
+
+  override def quickSort[T1 >: Nothing](ordering: Ordering[T1]): RList[T1] = this
 }
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T] {
@@ -268,6 +272,33 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     loop(this.map(_ :: RNil), RNil)
   }
+
+  override def quickSort[T1 >: T](ordering: Ordering[T1]): RList[T1] = {
+
+    @tailrec
+    def partition(listToBePartitioned: RList[T],
+                  pivot: T,
+                  listWithElementsSmallerThanPivot: RList[T],
+                  listWithElementsBiggerThanPivot: RList[T]
+                 ): (RList[T], RList[T]) =
+      listToBePartitioned match {
+        case RNil => (listWithElementsSmallerThanPivot, listWithElementsBiggerThanPivot)
+        case h :: remaining if ordering.lteq(h, pivot) => partition(remaining, pivot, h :: listWithElementsSmallerThanPivot, listWithElementsBiggerThanPivot)
+        case h :: remaining if ordering.gt(h, pivot)   => partition(remaining, pivot, listWithElementsSmallerThanPivot, h :: listWithElementsBiggerThanPivot)
+      }
+
+    @tailrec
+    def quickSortLoop(remainingList: RList[RList[T]], accumulator: RList[RList[T]]): RList[T] = remainingList match {
+      case RNil => accumulator.flatMap(e => e).reverse
+      case head :: remaining if head.isEmpty => quickSortLoop(remaining, accumulator)
+      case head :: remaining if head.tail.isEmpty => quickSortLoop(remaining, head :: accumulator)
+      case (firstElementOfHead :: remainingPartOfHead) :: remaining =>
+        val (smallerThanPivot, largerThanPivot) = partition(remainingPartOfHead, firstElementOfHead, RNil, RNil)
+        quickSortLoop(smallerThanPivot :: (firstElementOfHead :: RNil) :: largerThanPivot :: remaining, accumulator)
+    }
+
+    quickSortLoop(this :: RNil, RNil)
+  }
 }
 
 
@@ -320,4 +351,6 @@ object ListProblems extends App {
   val list5 = 10 :: 1 :: 9 :: 2 :: 8 :: 3 :: 7 :: 4 :: 5 :: 5 :: 5 :: RNil
 
   println(list5.mergeSort(Ordering[Int]))
+
+  println(list5.quickSort(Ordering[Int]))
 }
