@@ -2,8 +2,7 @@ package com.singhraghav.demo.asyn_using_mq.queue
 
 import com.singhraghav.demo.asyn_using_mq.IbmMqConnection
 
-import javax.jms.{Message, MessageListener, Session}
-import scala.util.{Failure, Success, Try}
+import javax.jms.{Message, Session}
 
 /**
  * keep the session in a client Acknowledge mode or transacted mode
@@ -26,26 +25,23 @@ object QueueConsumerUsingListenerDemo extends App {
 
   val consumer = IbmMqConnection.createConsumer(session, queueName = "DEV.QUEUE.1")
 
-  Try {
-    consumer.setMessageListener((message: Message) => {
-      val messageBody = message.getBody(classOf[String])
+  consumer.setMessageListener((message: Message) => {
+    val messageBody = message.getBody(classOf[String])
+    println(s"Received $message \n")
+    println(s"completed processing $messageBody \n")
+    message.acknowledge()
+  })
 
-      println(s"Received $message \n")
-
-      println(s"completed processing $messageBody \n")
-
-      message.acknowledge()
-    })
-  } match {
-    case Success(_) => println("success")
-    case Failure(exception) =>
-      exception.printStackTrace()
-      consumer.close()
-      session.close()
-      connection.close()
+  sys.addShutdownHook {
+    println("closing MQ connections")
+    consumer.close()
+    session.close()
+    connection.close()
   }
 
   connection.start()
+
+
 
   while (true) {}
 }
