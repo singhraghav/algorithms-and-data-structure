@@ -17,6 +17,9 @@ dependencies {
 
     implementation 'org.scala-lang:scala-library:2.13.12'
 
+    implementation 'com.ibm.mq:com.ibm.mq.allclient:9.3.3.1'
+
+
 }
 
 
